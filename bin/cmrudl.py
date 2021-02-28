@@ -31,7 +31,7 @@ __copyright__ = "Copyright (c) 2019 JrMasterModelBuilder"
 __license__ = "MPL-2.0"
 
 
-class Main:
+class Main(object):
     DL_PROGRESS_START = 1
     DL_PROGRESS_READ = 2
     DL_PROGRESS_WROTE = 3
@@ -71,11 +71,14 @@ class Main:
         return None
 
     def dict_has_props(self, dic, props):
-        return all(p in dic for p in props)
+        for p in props:
+            if not p in dic:
+                return False
+        return True
 
     def assert_status_code(self, code, expected):
         if code != expected:
-            raise Exception(f"Invalid status code: {code} expected: {expected}")
+            raise Exception("Invalid status code: %s expected: %s" % (code, expected))
 
     def seconds_human(self, seconds):
         m, s = divmod(seconds, 60)
@@ -91,12 +94,11 @@ class Main:
         while based > base and i < il:
             based /= base
             i += 1
-        return "{:.2f}{}".format(based, names[i])
+        return "%.2f%s" % (based, names[i])
 
     def percent_human(self, part, total):
         f = (part / float(total)) if total else 0
         return "%.2f%%" % (f * 100)
-
     def json_decode(self, s):
         return json.loads(s)
 
@@ -156,24 +158,26 @@ class Main:
                 headers["Range"] = "bytes=%s-" % (offset)
 
             start = time.time()
-            progress(self.DL_PROGRESS_START, start, start, offset, 0, offset, None)
+            progress(self.DL_PROGRESS_START, start, start, offset, 0, offset,
+                     None)
 
             res = self.request(url, headers)
             code = res.getcode()
 
             # If continued and range is invalid, then no more bytes.
             if continued and code == 416:
-                progress(
-                    self.DL_PROGRESS_DONE, start, time.time(), offset, 0, offset, offset
-                )
+                progress(self.DL_PROGRESS_DONE, start, time.time(), offset, 0,
+                         offset, offset)
                 return
 
             self.assert_status_code(res.getcode(), status)
 
             headers = res.info()
-            content_length = self.request_header_get(headers, "content-length", int)
+            content_length = self.request_header_get(headers, "content-length",
+                                                     int)
 
-            total = None if content_length is None else (offset + content_length)
+            total = None if content_length is None else (offset +
+                                                         content_length)
             size = offset
 
             while True:
@@ -182,27 +186,14 @@ class Main:
                 if not added:
                     break
                 size += added
-                progress(
-                    self.DL_PROGRESS_READ,
-                    start,
-                    time.time(),
-                    offset,
-                    added,
-                    size,
-                    total,
-                )
+                progress(self.DL_PROGRESS_READ, start, time.time(), offset,
+                         added, size, total)
                 fp.write(data)
-                progress(
-                    self.DL_PROGRESS_WROTE,
-                    start,
-                    time.time(),
-                    offset,
-                    added,
-                    size,
-                    total,
-                )
+                progress(self.DL_PROGRESS_WROTE, start, time.time(), offset,
+                         added, size, total)
 
-            progress(self.DL_PROGRESS_DONE, start, time.time(), offset, 0, size, total)
+            progress(self.DL_PROGRESS_DONE, start, time.time(), offset, 0,
+                     size, total)
 
     def parse_storage(self, html):
         class TheHTMLParser(HTMLParser):
@@ -254,9 +245,8 @@ class Main:
         weblink_get = cloud_settings["dispatcher"]["weblink_get"]
         weblink_get_len = len(weblink_get)
         if weblink_get_len != 1:
-            raise Exception(
-                "Unexpected dispatcher.weblink_get count: %s" % (weblink_get_len)
-            )
+            raise Exception("Unexpected dispatcher.weblink_get count: %s" %
+                            (weblink_get_len))
 
         weblink_get_url = weblink_get[0]["url"]
         self.log("Found URL: %s" % (weblink_get_url), True)
@@ -289,7 +279,7 @@ class Main:
             "name": file_name,
             "size": file_size,
             "mtime": file_mtime,
-            "hash": file_hash,
+            "hash": file_hash
         }
 
     def fetch_token(self):
@@ -326,14 +316,15 @@ class Main:
         return None
 
     def create_download_url(self, storage, token):
-        return "{}/{}?key={}".format(storage["url"], storage["id"], urllib_quote(token))
+        return "%s/%s?key=%s" % (storage["url"], storage["id"],
+                                 urllib_quote(token))
 
     def create_out_dir(self):
         opt_dir = self.options.dir
-        return opt_dir or ""
+        return opt_dir if opt_dir else ""
 
     def create_file_name_temp(self, storage):
-        return ".{}.{}".format(__prog__, urllib_quote(storage["hash"]))
+        return ".%s.%s" % (__prog__, urllib_quote(storage["hash"]))
 
     def create_file_name(self, storage):
         opt_file = self.options.file
@@ -344,7 +335,8 @@ class Main:
     def download_verify_size(self, file_path, file_size):
         size = self.stat(file_path).st_size
         if size != file_size:
-            raise Exception(f"Unexected download size: {size} expected: {file_size}")
+            raise Exception("Unexected download size: %s expected: %s" %
+                            (size, file_size))
 
     def download_set_mtime(self, file_path, file_mtime):
         os.utime(file_path, (file_mtime, file_mtime))
@@ -359,7 +351,7 @@ class Main:
             self.log("Output dir: %s" % (out_dir))
 
         file_name = self.create_file_name(None)
-        if file_name is not None:
+        if not file_name is None:
             self.log("Output file: %s" % (file_name))
             self.assert_not_exists(os.path.join(out_dir, file_name))
 
@@ -385,15 +377,18 @@ class Main:
         # only if metadata flag
         if self.options.metadata:
             file_size = storage["size"]
-            meta = {"file_name": file_name, "file_size": file_size, "download": url}
+            meta = {
+                "file_name": file_name,
+                "file_size": file_size,
+                "download": url
+            }
             print(json.dumps(meta))
             exit(0)
 
         # Download with progress info, adding new line to clear after.
         try:
-            self.request_download(
-                url, file_name_temp_path, self.download_progress, True
-            )
+            self.request_download(url, file_name_temp_path,
+                                  self.download_progress, True)
         finally:
             self.log("")
 
@@ -415,7 +410,8 @@ class Main:
         os.rename(file_name_temp_path, file_name_path)
         self.log("Done")
 
-    def download_progress(self, status, start, now, offset, added, current, total):
+    def download_progress(self, status, start, now, offset, added, current,
+                          total):
         if status is self.DL_PROGRESS_READ:
             return
 
@@ -432,13 +428,13 @@ class Main:
 
         timestr = self.seconds_human(math.floor(delta))
         percent = self.percent_human(current, total)
-        amount = "{} ({}) / {} ({})".format(
-            self.bytes_human(current), current, self.bytes_human(total), total
-        )
+        amount = "%s (%s) / %s (%s)" % (self.bytes_human(current), current,
+                                        self.bytes_human(total), total)
         persec = "%s/s" % (self.bytes_human(round(bytes_sec)))
         timerem = self.seconds_human(math.ceil(delta_remain))
 
-        self.output_progress("  ".join(["", timestr, percent, amount, persec, timerem]))
+        self.output_progress("  ".join(
+            ["", timestr, percent, amount, persec, timerem]))
 
     def run(self):
         self.download()
@@ -465,27 +461,43 @@ class Main:
 def main():
     parser = argparse.ArgumentParser(
         prog=__prog__,
-        description=os.linesep.join(
-            [f"{__prog__} {__version__}", f"{__copyright__} {__license__}"]
-        ),
-        formatter_class=argparse.RawTextHelpFormatter,
-    )
-    parser.add_argument(
-        "-v", "--version", action="version", version=__version__, help="Print version"
-    )
-    parser.add_argument("-V", "--verbose", action="store_true", help="Verbose mode")
-    parser.add_argument("-D", "--debug", action="store_true", help="Debug output")
-    parser.add_argument("-B", "--buffer", type=int, default=1024, help="Buffer size")
-    parser.add_argument(
-        "-t", "--timeout", type=int, default=60, help="Request timeout in seconds"
-    )
-    parser.add_argument(
-        "-M", "--mtime", action="store_true", help="Use server modified time"
-    )
+        description=os.linesep.join([
+            "%s %s" % (__prog__, __version__),
+            "%s %s" % (__copyright__, __license__)
+        ]),
+        formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument("-v",
+                        "--version",
+                        action="version",
+                        version=__version__,
+                        help="Print version")
+    parser.add_argument("-V",
+                        "--verbose",
+                        action="store_true",
+                        help="Verbose mode")
+    parser.add_argument("-D",
+                        "--debug",
+                        action="store_true",
+                        help="Debug output")
+    parser.add_argument("-B",
+                        "--buffer",
+                        type=int,
+                        default=1024,
+                        help="Buffer size")
+    parser.add_argument("-t",
+                        "--timeout",
+                        type=int,
+                        default=60,
+                        help="Request timeout in seconds")
+    parser.add_argument("-M",
+                        "--mtime",
+                        action="store_true",
+                        help="Use server modified time")
     parser.add_argument("-d", "--dir", default=None, help="Output directory")
-    parser.add_argument(
-        "-s", "--metadata", action="store_true", help="show metadata only"
-    )
+    parser.add_argument("-s",
+                        "--metadata",
+                        action="store_true",
+                        help="show metadata only")
     parser.add_argument("url", nargs=1, help="URL")
     parser.add_argument("file", nargs="?", default=None, help="FILE")
     options = parser.parse_args()
