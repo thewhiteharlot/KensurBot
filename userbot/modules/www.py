@@ -1,6 +1,6 @@
 # Copyright (C) 2019 The Raphielscape Company LLC.
 #
-# Licensed under the Raphielscape Public License, Version 1.c (the "License");
+# Licensed under the Raphielscape Public License, Version 1.d (the "License");
 # you may not use this file except in compliance with the License.
 #
 """ Userbot module containing commands related to the \
@@ -15,10 +15,10 @@ from userbot import CMD_HELP
 from userbot.events import register
 
 
-@register(outgoing=True, pattern=r"^\.speed$")
+@register(outgoing=True, pattern="^.speed$")
 async def speedtst(spd):
     """ For .speed command, use SpeedTest to check server speeds. """
-    await spd.edit("`Running speed test . . .`")
+    await spd.edit("`Executando teste de velocidade . . .`")
     test = Speedtest()
 
     test.get_best_server()
@@ -29,7 +29,7 @@ async def speedtst(spd):
 
     await spd.edit(
         "`"
-        "Started at "
+        "Início em "
         f"{result['timestamp']} \n\n"
         "Download "
         f"{speed_convert(result['download'])} \n"
@@ -56,18 +56,18 @@ def speed_convert(size):
     return f"{round(size, 2)} {units[zero]}"
 
 
-@register(outgoing=True, pattern=r"^\.dc$")
+@register(outgoing=True, pattern="^.dc$")
 async def neardc(event):
     """ For .dc command, get the nearest datacenter information. """
     result = await event.client(functions.help.GetNearestDcRequest())
     await event.edit(
-        f"Country : `{result.country}`\n"
-        f"Nearest Datacenter : `{result.nearest_dc}`\n"
-        f"This Datacenter : `{result.this_dc}`"
+        f"País : `{result.country}`\n"
+        f"Datacenter mais próximo : `{result.nearest_dc}`\n"
+        f"Este Datacenter : `{result.this_dc}`"
     )
 
 
-@register(outgoing=True, pattern=r"^\.ping$")
+@register(outgoing=True, pattern="^.ping$")
 async def pingme(pong):
     """ For .ping command, ping the userbot from any chat.  """
     start = datetime.now()
@@ -79,8 +79,19 @@ async def pingme(pong):
 
 CMD_HELP.update(
     {
-        "speed": ">`.speed`" "\nUsage: Does a speedtest and shows the results.",
-        "dc": ">`.dc`" "\nUsage: Finds the nearest datacenter from your server.",
-        "ping": ">`.ping`" "\nUsage: Shows how long it takes to ping your bot.",
+        "speed": ".speed\
+    \nUso: Faz um teste de velocidade e mostra os resultados."
+    }
+)
+CMD_HELP.update(
+    {
+        "dc": ".dc\
+    \nUso: Encontra o datacenter mais próximo de seu servidor."
+    }
+)
+CMD_HELP.update(
+    {
+        "ping": ".ping\
+    \nUso: Mostra quanto tempo leva para um pacote retornar ao seu bot."
     }
 )

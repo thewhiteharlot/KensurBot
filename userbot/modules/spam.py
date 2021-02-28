@@ -19,7 +19,7 @@ async def tmeme(e):
         await e.respond(letter)
     if BOTLOG:
         await e.client.send_message(
-            BOTLOG_CHATID, "#CSPAM\n" "TSpam was executed successfully"
+            BOTLOG_CHATID, "#CSPAM\n" "TSpam foi executado com sucesso"
         )
 
 
@@ -32,7 +32,7 @@ async def t_meme(e):
         await e.respond(word)
     if BOTLOG:
         await e.client.send_message(
-            BOTLOG_CHATID, "#WSPAM\n" "WSpam was executed successfully"
+            BOTLOG_CHATID, "#WSPAM\n" "WSpam foi executado com sucesso"
         )
 
 
@@ -44,7 +44,7 @@ async def spammers(e):
     await asyncio.wait([e.respond(spam_message) for i in range(counter)])
     if BOTLOG:
         await e.client.send_message(
-            BOTLOG_CHATID, "#SPAM\n" "Spam was executed successfully"
+            BOTLOG_CHATID, "#SPAM\n" "Spam foi executado com sucesso"
         )
 
 
@@ -57,7 +57,7 @@ async def tiny_pic_spam(e):
         await e.client.send_file(e.chat_id, link)
     if BOTLOG:
         await e.client.send_message(
-            BOTLOG_CHATID, "#PICSPAM\n" "PicSpam was executed successfully"
+            BOTLOG_CHATID, "#PICSPAM\n" "PicSpam foi executado com sucesso"
         )
 
 
@@ -72,22 +72,22 @@ async def spammer(e):
         await sleep(spamDelay)
     if BOTLOG:
         await e.client.send_message(
-            BOTLOG_CHATID, "#DelaySPAM\n" "DelaySpam was executed successfully"
+            BOTLOG_CHATID, "#DelaySPAM\n" "DelaySpam foi executado com sucesso"
         )
 
 
 CMD_HELP.update(
     {
-        "spam": ">`.cspam <text>`"
-        "\nUsage: Spam the text letter by letter."
-        "\n\n>`.spam <count> <text>`"
-        "\nUsage: Floods text in the chat!"
-        "\n\n>`.wspam <text>`"
-        "\nUsage: Spam the text word by word."
-        "\n\n>`.picspam <count> <link to image/gif>`"
-        "\nUsage: As if text spam was not enough!"
-        "\n\n>`.delayspam <delay> <count> <text>`"
-        "\nUsage: .spam but with custom delay."
-        "\n\n\n**NOTE: Spam at your own risk!**"
+        "spam": ">`.cspam <texto>`"
+        "\nUso: Spamma o texto letra por letra."
+        "\n\n>`.spam <número> <texto>`"
+        "\nUso: Spamma texto no chat!"
+        "\n\n>`.wspam <texto>`"
+        "\nUso: Spamma o texto palavra por palavra."
+        "\n\n>`.picspam <número> <link da imagem/gif>`"
+        "\nUso: Como se o spam de texto não fosse suficiente!"
+        "\n\n>`.delayspam <atraso> <número> <texto>`"
+        "\nUso: .spam mas com atraso personalizado."
+        "\n\n\n**NOTA: Spam por sua própria conta e risco!**"
     }
 )

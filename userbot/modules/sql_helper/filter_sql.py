@@ -64,7 +64,8 @@ def remove_filter(chat_id, keyword):
     to_check = get_filter(chat_id, keyword)
     if not to_check:
         return False
-    rem = SESSION.query(Filters).get((str(chat_id), keyword))
-    SESSION.delete(rem)
-    SESSION.commit()
-    return True
+    else:
+        rem = SESSION.query(Filters).get((str(chat_id), keyword))
+        SESSION.delete(rem)
+        SESSION.commit()
+        return True

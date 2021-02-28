@@ -1,12 +1,9 @@
 # Copyright (C) 2019 The Raphielscape Company LLC.
 #
-# Licensed under the Raphielscape Public License, Version 1.c (the "License");
+# Licensed under the Raphielscape Public License, Version 1.d (the "License");
 # you may not use this file except in compliance with the License.
-"""
-Lyrics Plugin Syntax:
-       .lyrics <aritst name> - <song name>
+#
 
-"""
 import os
 
 import lyricsgenius
@@ -19,50 +16,53 @@ if GENIUS is not None:
     genius = lyricsgenius.Genius(GENIUS)
 
 
-@register(outgoing=True, pattern=r"^\.lyrics (?:(now)|(.*) - (.*))")
+@register(outgoing=True, pattern="^.lyrics (?:(now)|(.*) - (.*))")
 async def lyrics(lyric):
-    await lyric.edit("**Processing...**")
-
+    await lyric.edit("`Obtendo informações...`")
     if GENIUS is None:
-        return await lyric.edit("**Add Genius access token to config vars.**")
-
+        await lyric.edit(
+            "`Forneça o token de acesso genius nas ConfigVars do Heroku...`"
+        )
+        return False
     if lyric.pattern_match.group(1) == "now":
         playing = User(LASTFM_USERNAME, lastfm).get_now_playing()
         if playing is None:
-            return await lyric.edit(
-                "**LastFM says you're not playing anything right now.**"
-            )
+            await lyric.edit("`Sem informações do scrobble atual do lastfm...`")
+            return False
         artist = playing.get_artist()
         song = playing.get_title()
     else:
         artist = lyric.pattern_match.group(2)
         song = lyric.pattern_match.group(3)
-
-    await lyric.edit(f"**Searching lyrics for** `{artist} - {song}`**...**")
+    await lyric.edit(f"`Procurando letras por {artist} - {song}...`")
     songs = genius.search_song(song, artist)
-
     if songs is None:
-        return await lyric.edit(
-            f"**Couldn't find lyrics for** `{artist} - {song}`**.**"
-        )
-
+        await lyric.edit(f"`Música`  **{artist} - {song}**  `não encontrada...`")
+        return False
     if len(songs.lyrics) > 4096:
-        await lyric.edit("**Uploading lyrics as file...**")
+        await lyric.edit("`A letra é muito grande, visualize o arquivo para vê-la.`")
         with open("lyrics.txt", "w+") as f:
             f.write(f"Search query: \n{artist} - {song}\n\n{songs.lyrics}")
-        await lyric.client.send_file(lyric.chat_id, "lyrics.txt", reply_to=lyric.id)
+        await lyric.client.send_file(
+            lyric.chat_id,
+            "lyrics.txt",
+            reply_to=lyric.id,
+        )
         os.remove("lyrics.txt")
+        return True
     else:
         await lyric.edit(
-            f"**Search query**:\n`{artist}` - `{song}`" f"\n\n{songs.lyrics}"
+            f"**Consulta de pesquisa**:\n`{artist}` - `{song}`"
+            f"\n\n```{songs.lyrics}```"
         )
+        return True
 
 
 CMD_HELP.update(
     {
-        "lyrics": ">`.lyrics` **<artist name> - <song name>**"
-        "\nUsage: Gets lyrics for given song."
-        "\n\n>`.lyrics now`"
-        "\nUsage: Gets lyrics for current LastFM scrobble."
+        "lyrics": ".lyrics **<nome do artista> - <nome da música>**"
+        "\nUso: Obtenha as letras do artista e da música correspondentes."
+        "\n\n.lyrics now"
+        "\nUso: Obtenha as letras do artista e música atuais do scrobble do lastfm."
     }
 )

@@ -1,6 +1,6 @@
 # Copyright (C) 2019 The Raphielscape Company LLC.
 #
-# Licensed under the Raphielscape Public License, Version 1.c (the "License");
+# Licensed under the Raphielscape Public License, Version 1.d (the "License");
 # you may not use this file except in compliance with the License.
 #
 # The entire source code is OSSRPL except 'makeqr and getqr' which is MPL
@@ -19,7 +19,7 @@ from userbot import CMD_HELP, LOGS
 from userbot.events import register
 
 
-@register(pattern=r"^\.decode$", outgoing=True)
+@register(pattern=r"^.decode$", outgoing=True)
 async def parseqr(qr_e):
     """ For .decode command, get QR Code/BarCode content from the replied photo. """
     downloaded_file_name = await qr_e.client.download_media(
@@ -48,18 +48,18 @@ async def parseqr(qr_e):
     if not t_response:
         LOGS.info(e_response)
         LOGS.info(t_response)
-        return await qr_e.edit("**Failed to decode.**")
+        return await qr_e.edit("Failed to decode.")
     soup = BeautifulSoup(t_response, "html.parser")
     qr_contents = soup.find_all("pre")[0].text
     await qr_e.edit(qr_contents)
 
 
-@register(pattern=r"\.barcode(?: |$)([\s\S]*)", outgoing=True)
+@register(pattern=r".barcode(?: |$)([\s\S]*)", outgoing=True)
 async def bq(event):
     """ For .barcode command, genrate a barcode containing the given content. """
-    await event.edit("**Processing...**")
+    await event.edit("`Processing..`")
     input_str = event.pattern_match.group(1)
-    message = "**Syntax:** `.barcode <long text to include>`"
+    message = "SYNTAX: `.barcode <long text to include>`"
     reply_msg_id = event.message.id
     if input_str:
         message = input_str
@@ -71,12 +71,14 @@ async def bq(event):
             m_list = None
             with open(downloaded_file_name, "rb") as fd:
                 m_list = fd.readlines()
-            message = "".join(m.decode("UTF-8") + "\r\n" for m in m_list)
+            message = ""
+            for m in m_list:
+                message += m.decode("UTF-8") + "\r\n"
             os.remove(downloaded_file_name)
         else:
             message = previous_message.message
     else:
-        return event.edit("**Syntax:** `.barcode <long text to include>`")
+        return event.edit("SYNTAX: `.barcode <long text to include>`")
 
     bar_code_type = "code128"
     try:
@@ -89,11 +91,11 @@ async def bq(event):
     await event.delete()
 
 
-@register(pattern=r"\.makeqr(?: |$)([\s\S]*)", outgoing=True)
+@register(pattern=r".makeqr(?: |$)([\s\S]*)", outgoing=True)
 async def make_qr(makeqr):
     """ For .makeqr command, make a QR Code containing the given content. """
     input_str = makeqr.pattern_match.group(1)
-    message = "**Syntax:** `.makeqr <long text to include>`"
+    message = "SYNTAX: `.makeqr <long text to include>`"
     reply_msg_id = None
     if input_str:
         message = input_str
@@ -105,7 +107,9 @@ async def make_qr(makeqr):
             m_list = None
             with open(downloaded_file_name, "rb") as file:
                 m_list = file.readlines()
-            message = "".join(media.decode("UTF-8") + "\r\n" for media in m_list)
+            message = ""
+            for media in m_list:
+                message += media.decode("UTF-8") + "\r\n"
             os.remove(downloaded_file_name)
         else:
             message = previous_message.message
@@ -129,13 +133,18 @@ async def make_qr(makeqr):
 
 CMD_HELP.update(
     {
-        "qr": ">`.makeqr <content>`"
-        "\nUsage: Make a QR Code from the given content."
-        "\nExample: .makeqr www.google.com"
-        "\nNote: use `.decode <reply to barcode/qrcode>` to get decoded content.",
-        "barcode": ">`.barcode <content>`"
-        "\nUsage: Make a BarCode from the given content."
-        "\nExample: .barcode www.google.com"
-        "\nNote: use `.decode <reply to barcode/qrcode>` to get decoded content.",
+        "qr": ".makeqr <content>\
+\nUso: Make a QR Code from the given content.\
+\nExample: .makeqr www.google.com\
+\nNote: use .decode <reply to barcode/qrcode> to get decoded content."
+    }
+)
+
+CMD_HELP.update(
+    {
+        "barcode": ".barcode <content>\
+\nUso: Make a BarCode from the given content.\
+\nExample: .barcode www.google.com\
+\nNote: use .decode <reply to barcode/qrcode> to get decoded content."
     }
 )

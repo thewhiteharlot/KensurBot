@@ -57,7 +57,8 @@ def rm_note(chat_id, keyword):
     to_check = get_note(chat_id, keyword)
     if not to_check:
         return False
-    rem = SESSION.query(Notes).get((str(chat_id), keyword))
-    SESSION.delete(rem)
-    SESSION.commit()
-    return True
+    else:
+        rem = SESSION.query(Notes).get((str(chat_id), keyword))
+        SESSION.delete(rem)
+        SESSION.commit()
+        return True

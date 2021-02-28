@@ -1,7 +1,8 @@
 # Copyright (C) 2019 The Raphielscape Company LLC.
 #
-# Licensed under the Raphielscape Public License, Version 1.c (the "License");
+# Licensed under the Raphielscape Public License, Version 1.d (the "License");
 # you may not use this file except in compliance with the License.
+#
 
 from telethon.tl.functions.messages import EditChatDefaultBannedRightsRequest
 from telethon.tl.types import ChatBannedRights
@@ -10,7 +11,7 @@ from userbot import CMD_HELP
 from userbot.events import register
 
 
-@register(outgoing=True, pattern=r"^\.lock ?(.*)")
+@register(outgoing=True, pattern=r"^.lock ?(.*)")
 async def locks(event):
     input_str = event.pattern_match.group(1).lower()
     peer_id = event.chat_id
@@ -68,9 +69,11 @@ async def locks(event):
         what = "everything"
     else:
         if not input_str:
-            return await event.edit("**I can't lock nothing!**")
+            await event.edit("`I can't lock nothing !!`")
+            return
         else:
-            return await event.edit(f"**Invalid lock type:** `{input_str}`")
+            await event.edit(f"`Invalid lock type:` {input_str}")
+            return
 
     lock_rights = ChatBannedRights(
         until_date=None,
@@ -89,14 +92,13 @@ async def locks(event):
         await event.client(
             EditChatDefaultBannedRightsRequest(peer=peer_id, banned_rights=lock_rights)
         )
-        await event.edit(f"**Locked {what} for this chat!**")
+        await event.edit(f"`Locked {what} for this chat !!`")
     except BaseException as e:
-        return await event.edit(
-            f"**Do I have proper rights for that ??**\nError: `{str(e)}`"
-        )
+        await event.edit(f"`Do I have proper rights for that ??`\n**Error:** {str(e)}")
+        return
 
 
-@register(outgoing=True, pattern=r"^\.unlock ?(.*)")
+@register(outgoing=True, pattern=r"^.unlock ?(.*)")
 async def rem_locks(event):
     input_str = event.pattern_match.group(1).lower()
     peer_id = event.chat_id
@@ -154,9 +156,11 @@ async def rem_locks(event):
         what = "everything"
     else:
         if not input_str:
-            return await event.edit("**I can't unlock nothing!**")
+            await event.edit("`I can't unlock nothing !!`")
+            return
         else:
-            return await event.edit(f"**Invalid unlock type:** `{input_str}`")
+            await event.edit(f"`Invalid unlock type:` {input_str}")
+            return
 
     unlock_rights = ChatBannedRights(
         until_date=None,
@@ -177,19 +181,18 @@ async def rem_locks(event):
                 peer=peer_id, banned_rights=unlock_rights
             )
         )
-        await event.edit(f"**Unlocked {what} for this chat!**")
+        await event.edit(f"`Unlocked {what} for this chat !!`")
     except BaseException as e:
-        return await event.edit(
-            f"**Do I have proper rights for that ??**\nError: `{str(e)}`"
-        )
+        await event.edit(f"`Do I have proper rights for that ??`\n**Error:** {str(e)}")
+        return
 
 
 CMD_HELP.update(
     {
-        "locks": ">`.lock <all (or) type(s)>` or >`.unlock <all (or) type(s)>`"
-        "\nUsage: Allows you to lock/unlock some common message types in the chat."
-        "\n[NOTE: Requires proper admin rights in the chat !!]"
-        "\n\nAvailable message types to lock/unlock are: "
-        "\n`all, msg, media, sticker, gif, game, inline, poll, invite, pin, info`"
+        "locks": ".lock <all (or) type(s)> or .unlock <all (or) type(s)>\
+\nUso: Allows you to lock/unlock some common message types in the chat.\
+[NOTE: Requires proper admin rights in the chat !!]\
+\n\nAvailable message types to lock/unlock are: \
+\n`all, msg, media, sticker, gif, game, inline, poll, invite, pin, info`"
     }
 )

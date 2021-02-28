@@ -1,11 +1,16 @@
 # Copyright (C) 2019 The Raphielscape Company LLC.
 #
+# Licensed under the Raphielscape Public License, Version 1.d (the "License");
+# Copyright (C) 2019 The Raphielscape Company LLC.
+#
 # Licensed under the Raphielscape Public License, Version 1.c (the "License");
 # you may not use this file except in compliance with the License.
 #
 """ Userbot initialization. """
 
 import os
+import re
+import time
 from distutils.util import strtobool as sb
 from logging import DEBUG, INFO, basicConfig, getLogger
 from pathlib import Path
@@ -24,6 +29,8 @@ STORAGE = lambda n: Storage(Path("data") / n)
 
 load_dotenv("config.env")
 
+StartTime = time.time()
+
 # Bot Logs setup:
 CONSOLE_LOGGER_VERBOSE = sb(os.environ.get("CONSOLE_LOGGER_VERBOSE") or "False")
 
@@ -40,20 +47,20 @@ LOGS = getLogger(__name__)
 
 if version_info[0] < 3 or version_info[1] < 8:
     LOGS.info(
-        "You MUST have a python version of at least 3.8."
-        "Multiple features depend on this. Bot quitting."
+        "Você DEVE ter uma versão python de pelo menos 3.8."
+        "Vários recursos dependem disso. Finalizando serviços."
     )
     quit(1)
 
 # Check if the config was edited by using the already used variable.
 # Basically, its the 'virginity check' for the config file ;)
 CONFIG_CHECK = (
-    os.environ.get("___________PLOX_______REMOVE_____THIS_____LINE__________") or None
+    os.environ.get("___________REMOVA__ISSO___________") or None
 )
 
 if CONFIG_CHECK:
     LOGS.info(
-        "Please remove the line mentioned in the first hashtag from the config.env file"
+        "Remova a linha mencionada na primeira hashtag do arquivo config.env"
     )
     quit(1)
 
@@ -61,8 +68,12 @@ if CONFIG_CHECK:
 API_KEY = os.environ.get("API_KEY") or None
 API_HASH = os.environ.get("API_HASH") or None
 
+
 # Userbot Session String
 STRING_SESSION = os.environ.get("STRING_SESSION") or None
+
+# Deezloader
+DEEZER_ARL_TOKEN = os.environ.get("DEEZER_ARL_TOKEN") or None
 
 # Logging channel/group ID configuration.
 BOTLOG_CHATID = int(os.environ.get("BOTLOG_CHATID") or 0)
@@ -75,26 +86,28 @@ LOGSPAMMER = sb(os.environ.get("LOGSPAMMER") or "False")
 PM_AUTO_BAN = sb(os.environ.get("PM_AUTO_BAN") or "False")
 
 # Heroku Credentials for updater.
+HEROKU_MEMEZ = sb(os.environ.get("HEROKU_MEMEZ") or "False")
 HEROKU_APP_NAME = os.environ.get("HEROKU_APP_NAME") or None
 HEROKU_API_KEY = os.environ.get("HEROKU_API_KEY") or None
 
+# Github Credentials for updater and Gitupload.
+GIT_REPO_NAME = os.environ.get("GIT_REPO_NAME") or None
+GITHUB_ACCESS_TOKEN = os.environ.get("GITHUB_ACCESS_TOKEN") or None
+
 # Custom (forked) repo URL and BRANCH for updater.
-UPSTREAM_REPO_URL = (
-    os.environ.get("UPSTREAM_REPO_URL") or "https://github.com/KenHV/KensurBot.git"
-)
+UPSTREAM_REPO_URL = (os.environ.get("UPSTREAM_REPO_URL")
+                     or "https://github.com/thewhiteharlot/purplebot.git")
 UPSTREAM_REPO_BRANCH = os.environ.get("UPSTREAM_REPO_BRANCH") or "sql-extended"
 
 # Console verbose logging
-CONSOLE_LOGGER_VERBOSE = sb(os.environ.get("CONSOLE_LOGGER_VERBOSE") or "False")
+CONSOLE_LOGGER_VERBOSE = sb(
+    os.environ.get("CONSOLE_LOGGER_VERBOSE") or "False")
 
 # SQL Database URI
 DB_URI = os.environ.get("DATABASE_URL") or None
 
 # OCR API key
 OCR_SPACE_API_KEY = os.environ.get("OCR_SPACE_API_KEY") or None
-
-# Default .alive name
-ALIVE_NAME = str(os.environ.get("ALIVE_NAME")) or None
 
 # remove.bg API key
 REM_BG_API_KEY = os.environ.get("REM_BG_API_KEY") or None
@@ -106,23 +119,42 @@ GOOGLE_CHROME_BIN = os.environ.get("GOOGLE_CHROME_BIN") or None
 # OpenWeatherMap API Key
 OPEN_WEATHER_MAP_APPID = os.environ.get("OPEN_WEATHER_MAP_APPID") or None
 WEATHER_DEFCITY = os.environ.get("WEATHER_DEFCITY") or None
+WEATHER_DEFLANG = os.environ.get("WEATHER_DEFLANG") or None
+
+# Genius lyrics API
+GENIUS = os.environ.get("GENIUS_ACCESS_TOKEN") or None
+
+# Wolfram Alpha API
+WOLFRAM_ID = os.environ.get("WOLFRAM_ID") or None
 
 # Anti Spambot Config
 ANTI_SPAMBOT = sb(os.environ.get("ANTI_SPAMBOT") or "False")
 ANTI_SPAMBOT_SHOUT = sb(os.environ.get("ANTI_SPAMBOT_SHOUT") or "False")
 
 # Default .alive name
-ALIVE_NAME = os.environ.get("ALIVE_NAME") or None
+ALIVE_NAME = str(os.environ.get("ALIVE_NAME")) or None
+
+# Default .alive logo
+ALIVE_LOGO = os.environ.get("ALIVE_LOGO") or None
 
 # Time & Date - Country and Time Zone
 COUNTRY = str(os.environ.get("COUNTRY") or "")
 TZ_NUMBER = int(os.environ.get("TZ_NUMBER") or 1)
 
+# Version of PurpleBot
+USERBOT_VERSION = os.environ.get("USERBOT_VERSION") or "4.8"
+
+# User Terminal alias
+USER_TERM_ALIAS = os.environ.get("USER_TERM_ALIAS") or "PurpleBot"
+
+# Updater alias
+UPDATER_ALIAS = os.environ.get("UPDATER_ALIAS") or "PurpleBot"
+
 # Zipfile module
 ZIP_DOWNLOAD_DIRECTORY = os.environ.get("ZIP_DOWNLOAD_DIRECTORY") or "./zips"
 
 # Clean Welcome
-CLEAN_WELCOME = sb(os.environ.get("CLEAN_WELCOME") or "False")
+CLEAN_WELCOME = sb(os.environ.get("CLEAN_WELCOME") or "True")
 
 # Last.fm Module
 BIO_PREFIX = os.environ.get("BIO_PREFIX") or None
@@ -154,11 +186,24 @@ TEMP_DOWNLOAD_DIRECTORY = os.environ.get("TMP_DOWNLOAD_DIRECTORY") or "./downloa
 # Terminal Alias
 TERM_ALIAS = os.environ.get("TERM_ALIAS") or None
 
-# Genius Lyrics API
-GENIUS = os.environ.get("GENIUS_ACCESS_TOKEN") or None
-
 # Uptobox
-USR_TOKEN = os.environ.get("USR_TOKEN_UPTOBOX") or None
+USR_TOKEN = os.environ.get("USR_TOKEN_UPTOBOX", None)
+
+
+# Setting Up CloudMail.ru and MEGA.nz extractor binaries,
+# and giving them correct perms to work properly.
+if not os.path.exists("bin"):
+    os.mkdir("bin")
+
+binaries = {
+    "https://raw.githubusercontent.com/adekmaulana/megadown/master/megadown": "bin/megadown",
+    "https://raw.githubusercontent.com/yshalsager/cmrudl.py/master/cmrudl.py": "bin/cmrudl",
+}
+
+for binary, path in binaries.items():
+    downloader = SmartDL(binary, path, progress_bar=False)
+    downloader.start()
+    os.chmod(path, 0o755)
 
 # 'bot' variable
 if STRING_SESSION:
@@ -210,5 +255,6 @@ USERS = {}
 COUNT_PM = {}
 LASTMSG = {}
 CMD_HELP = {}
+ZALG_LIST = {}
 ISAFK = False
 AFKREASON = None

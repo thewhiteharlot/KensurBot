@@ -1,31 +1,35 @@
 # Copyright (C) 2019 The Raphielscape Company LLC.
 #
-# Licensed under the Raphielscape Public License, Version 1.c (the "License");
+# Licensed under the Raphielscape Public License, Version 1.d (the "License");
 # you may not use this file except in compliance with the License.
 #
 """ Userbot module containing commands related to android"""
 
+import asyncio
 import json
+import math
+import os
 import re
+import time
 
 from bs4 import BeautifulSoup
 from requests import get
 
-from userbot import CMD_HELP
+from userbot import CMD_HELP, TEMP_DOWNLOAD_DIRECTORY
 from userbot.events import register
+from userbot.utils import chrome, human_to_bytes, humanbytes, md5, time_formatter
 
 GITHUB = "https://github.com"
 
 
 @register(outgoing=True, pattern=r"^\.magisk$")
 async def magisk(request):
-    """ magisk latest releases """
     magisk_dict = {
-        "Stable": "https://raw.githubusercontent.com/topjohnwu/magisk_files/master/stable.json",
+        "Estável": "https://raw.githubusercontent.com/topjohnwu/magisk_files/master/stable.json",
         "Beta": "https://raw.githubusercontent.com/topjohnwu/magisk_files/master/beta.json",
         "Canary": "https://raw.githubusercontent.com/topjohnwu/magisk_files/canary/canary.json",
     }
-    releases = "Latest Magisk Releases:\n"
+    releases = "Últimos lançamentos do Magisk:\n"
     for name, release_url in magisk_dict.items():
         data = get(release_url).json()
         if str(name) == "Canary":
@@ -41,17 +45,18 @@ async def magisk(request):
                 "https://github.com/topjohnwu/magisk_files/raw/canary/"
                 + data["uninstaller"]["link"]
             )
+
         releases += (
             f'{name}: [ZIP v{data["magisk"]["version"]}]({data["magisk"]["link"]}) | '
             f'[APK v{data["app"]["version"]}]({data["app"]["link"]}) | '
-            f'[Uninstaller]({data["uninstaller"]["link"]})\n'
+            f'[Desinstalador]({data["uninstaller"]["link"]})\n'
         )
     await request.edit(releases)
 
 
 @register(outgoing=True, pattern=r"^.device(?: |$)(\S*)")
 async def device_info(request):
-    """ get android device basic info from its codename """
+    """ informações básicas do dispositivo android pelo seu codename """
     textx = await request.get_reply_message()
     codename = request.pattern_match.group(1)
     if codename:
@@ -59,7 +64,7 @@ async def device_info(request):
     elif textx:
         codename = textx.text
     else:
-        await request.edit("**Usage:** `.device <codename/model>`")
+        await request.edit("`Uso: .device <codenome> / <modelo>`")
         return
     data = json.loads(
         get(
@@ -69,21 +74,21 @@ async def device_info(request):
     )
     results = data.get(codename)
     if results:
-        reply = f"**Search results for** `{codename}`:\n\n"
+        reply = f"**Resultados da pesquisa por {codename}**:\n\n"
         for item in results:
             reply += (
-                f"Brand: `{item['brand']}`\n"
-                f"Name: `{item['name']}`\n"
-                f"Model: `{item['model']}`\n\n"
+                f"**Marca**: {item['brand']}\n"
+                f"**Nome**: {item['name']}\n"
+                f"**Modelo**: {item['model']}\n\n"
             )
     else:
-        reply = f"`Couldn't find info about {codename}!`\n"
+        reply = f"`Sem informações sobre {codename}!`\n"
     await request.edit(reply)
 
 
 @register(outgoing=True, pattern=r"^.codename(?: |)([\S]*)(?: |)([\s\S]*)")
 async def codename_info(request):
-    """ search for android codename """
+    """ procura por codenome do dispositivo android """
     textx = await request.get_reply_message()
     brand = request.pattern_match.group(1).lower()
     device = request.pattern_match.group(2).lower()
@@ -94,7 +99,7 @@ async def codename_info(request):
         brand = textx.text.split(" ")[0]
         device = " ".join(textx.text.split(" ")[1:])
     else:
-        await request.edit("**Usage:** `.codename <brand> <device>`")
+        await request.edit("`Uso: .codename <marca> <dispositivo>`")
         return
 
     data = json.loads(
@@ -111,18 +116,125 @@ async def codename_info(request):
         if i["name"].lower() == device.lower() or i["model"].lower() == device.lower()
     ]
     if results:
-        reply = f"**Search results for** `{brand} {device}`:\n\n"
+        reply = f"**Resultados da pesquisa por {brand} {device}**:\n\n"
         if len(results) > 8:
             results = results[:8]
         for item in results:
             reply += (
-                f"Device: `{item['device']}`\n"
-                f"Name: `{item['name']}`\n"
-                f"Model: `{item['model']}`\n\n"
+                f"**Dispositivo**: {item['device']}\n"
+                f"**Nome**: {item['name']}\n"
+                f"**Modelo**: {item['model']}\n\n"
             )
     else:
-        reply = f"**Couldn't find the codename of** `{brand} {device}`\n"
+        reply = f"`Sem resultados para {device} codename!`\n"
     await request.edit(reply)
+
+
+@register(outgoing=True, pattern="^.pixeldl(?: |$)(.*)")
+async def download_api(dl):
+    await dl.edit("`Coletando informações...`")
+    URL = dl.pattern_match.group(1)
+    URL_MSG = await dl.get_reply_message()
+    if URL:
+        pass
+    elif URL_MSG:
+        URL = URL_MSG.text
+    else:
+        await dl.edit("`Informação vazia...`")
+        return
+    if not re.findall(r"\bhttps?://download.*pixelexperience.*\.org\S+", URL):
+        await dl.edit("`Informação inválida...`")
+        return
+    driver = await chrome()
+    await dl.edit("`Obtendo informações...`")
+    driver.get(URL)
+    error = driver.find_elements_by_class_name("swal2-content")
+    if len(error) > 0:
+        if error[0].text == "Arquivo Inválido.":
+            await dl.edit(f"`FileNotFoundError`: {URL} inválido.")
+            return
+    datas = driver.find_elements_by_class_name("download__meta")
+    """ - enumere os dados para ter certeza de que o download corresponda com a versão - """
+    md5_origin = None
+    i = None
+    for index, value in enumerate(datas):
+        for data in value.text.split("\n"):
+            if data.startswith("MD5"):
+                md5_origin = data.split(":")[1].strip()
+                i = index
+                break
+        if md5_origin is not None and i is not None:
+            break
+    if md5_origin is None and i is None:
+        await dl.edit("`Não há versão equivalente disponível...`")
+    if URL.endswith("/"):
+        file_name = URL.split("/")[-2]
+    else:
+        file_name = URL.split("/")[-1]
+    file_path = TEMP_DOWNLOAD_DIRECTORY + file_name
+    download = driver.find_elements_by_class_name("download__btn")[i]
+    download.click()
+    await dl.edit("`Começando download...`")
+    file_size = human_to_bytes(download.text.split(None, 3)[-1].strip("()"))
+    display_message = None
+    complete = False
+    start = time.time()
+    while complete is False:
+        if os.path.isfile(file_path + ".crdownload"):
+            try:
+                downloaded = os.stat(file_path + ".crdownload").st_size
+                status = "Baixando"
+            except OSError:  # Rare case
+                await asyncio.sleep(1)
+                continue
+        elif os.path.isfile(file_path):
+            downloaded = os.stat(file_path).st_size
+            file_size = downloaded
+            status = "Checando"
+        else:
+            await asyncio.sleep(0.3)
+            continue
+        diff = time.time() - start
+        percentage = downloaded / file_size * 100
+        speed = round(downloaded / diff, 2)
+        eta = round((file_size - downloaded) / speed)
+        prog_str = "`{0}` | [{1}{2}] `{3}%`".format(
+            status,
+            "".join(["■" for i in range(math.floor(percentage / 10))]),
+            "".join(["▨" for i in range(10 - math.floor(percentage / 10))]),
+            round(percentage, 2),
+        )
+        current_message = (
+            "`[DOWNLOAD]`\n\n"
+            f"`{file_name}`\n"
+            f"`Status`\n{prog_str}\n"
+            f"`{humanbytes(downloaded)} of {humanbytes(file_size)}"
+            f" @ {humanbytes(speed)}`\n"
+            f"`Tempo Estimado` -> {time_formatter(eta)}"
+        )
+        if (
+            round(diff % 15.00) == 0
+            and display_message != current_message
+            or (downloaded == file_size)
+        ):
+            await dl.edit(current_message)
+            display_message = current_message
+        if downloaded == file_size:
+            if not os.path.isfile(file_path):  # Rare case
+                await asyncio.sleep(1)
+                continue
+            MD5 = await md5(file_path)
+            if md5_origin == MD5:
+                complete = True
+            else:
+                await dl.edit("`Download corrompido...`")
+                os.remove(file_path)
+                driver.quit()
+                return
+    await dl.respond(f"`{file_name}`\n\n" f"Download finalizado em `{file_path}`.")
+    await dl.delete()
+    driver.quit()
+    return
 
 
 @register(outgoing=True, pattern=r"^.specs(?: |)([\S]*)(?: |)([\s\S]*)")
@@ -137,7 +249,7 @@ async def devices_specifications(request):
         brand = textx.text.split(" ")[0]
         device = " ".join(textx.text.split(" ")[1:])
     else:
-        await request.edit("**Usage:** `.specs <brand> <device>`")
+        await request.edit("`Uso: .specs <marca> <dispositivo>`")
         return
     all_brands = (
         BeautifulSoup(
@@ -152,7 +264,7 @@ async def devices_specifications(request):
             i["href"] for i in all_brands if brand == i.text.strip().lower()
         ][0]
     except IndexError:
-        await request.edit(f"`{brand}` **is an unknown brand!**")
+        await request.edit(f"`{brand} é uma marca desconhecida/inexistente!`")
     devices = BeautifulSoup(get(brand_page_url).content, "lxml").findAll(
         "div", {"class": "model-listing-container-80"}
     )
@@ -164,7 +276,7 @@ async def devices_specifications(request):
             if device in i.text.strip().lower()
         ]
     except IndexError:
-        await request.edit(f"**Can't find** `{device}`.")
+        await request.edit(f"`não foi possível achar {device}!`")
     if len(device_page_url) > 2:
         device_page_url = device_page_url[:2]
     reply = ""
@@ -195,11 +307,11 @@ async def twrp(request):
     elif textx:
         device = textx.text.split(" ")[0]
     else:
-        await request.edit("**Usage:** `.twrp <codename>`")
+        await request.edit("`Uso: .twrp <codenome>`")
         return
     url = get(f"https://dl.twrp.me/{device}/")
     if url.status_code == 404:
-        reply = f"**Couldn't find TWRP downloads for** `{device}`!`\n"
+        reply = f"`Não foi possível achar downloads para {device}!`\n"
         await request.edit(reply)
         return
     page = BeautifulSoup(url.content, "lxml")
@@ -209,24 +321,26 @@ async def twrp(request):
     size = page.find("span", {"class": "filesize"}).text
     date = page.find("em").text.strip()
     reply = (
-        f"**Latest TWRP for {device}:**\n"
+        f"**TWRP mais recente para {device}:**\n"
         f"[{dl_file}]({dl_link}) - __{size}__\n"
-        f"**Updated:** __{date}__\n"
+        f"**Atualizado:** __{date}__\n"
     )
     await request.edit(reply)
 
 
 CMD_HELP.update(
     {
-        "android": ">`.magisk`"
-        "\nGet latest Magisk releases"
-        "\n\n>`.device <codename>`"
-        "\nUsage: Get info about android device codename or model."
-        "\n\n>`.codename <brand> <device>`"
-        "\nUsage: Search for android device codename."
-        "\n\n>`.specs <brand> <device>`"
-        "\nUsage: Get device specifications info."
-        "\n\n>`.twrp <codename>`"
-        "\nUsage: Get latest twrp download for android device."
+        "android": ".magisk\
+\nÚltimas versões do Magisk\
+\n\n.device <codenome>\
+\nUso: Obtenha informações sobre codenome ou modelo do dispositivo.\
+\n\n.codename <marca> <dispositivo>\
+\nUso: Procure pelo codenome do dispositivo.\
+\n\n.pixeldl **<download.pixelexperience.org>**\
+\nUso: Download da ROM Pixel Experience pro seu servidor do userbot.\
+\n\n.specs <marca> <dispositivo>\
+\nUso: Obtenha especificações do dispositivo.\
+\n\n.twrp <codenome>\
+\nUso: Obtenha última versão do TWRP para o dispositivo."
     }
 )

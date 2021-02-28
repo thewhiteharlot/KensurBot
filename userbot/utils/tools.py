@@ -1,21 +1,13 @@
-# Copyright (C) 2020 Adek Maulana
+# Copyright (C) 2019 Adek Maulana
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Licensed under the Raphielscape Public License, Version 1.d (the "License");
+# you may not use this file except in compliance with the License.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import hashlib
 import re
+
+from telethon.tl.types import DocumentAttributeFilename
 
 
 async def md5(fname: str) -> str:
@@ -67,3 +59,32 @@ def human_to_bytes(size: str) -> int:
         size = re.sub(r"([KMGT])", r" \1", size)
     number, unit = [string.strip() for string in size.split()]
     return int(float(number) * units[unit])
+
+
+async def check_media(reply_message):
+    if reply_message and reply_message.media:
+        if reply_message.photo:
+            data = reply_message.photo
+        elif reply_message.document:
+            if (
+                DocumentAttributeFilename(file_name="AnimatedSticker.tgs")
+                in reply_message.media.document.attributes
+            ):
+                return False
+            if (
+                reply_message.gif
+                or reply_message.video
+                or reply_message.audio
+                or reply_message.voice
+            ):
+                return False
+            data = reply_message.media.document
+        else:
+            return False
+    else:
+        return False
+
+    if not data or data is None:
+        return False
+    else:
+        return data

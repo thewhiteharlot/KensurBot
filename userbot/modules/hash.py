@@ -1,6 +1,6 @@
 # Copyright (C) 2019 The Raphielscape Company LLC.
 #
-# Licensed under the Raphielscape Public License, Version 1.c (the "License");
+# Licensed under the Raphielscape Public License, Version 1.d (the "License");
 # you may not use this file except in compliance with the License.
 #
 """ Userbot module containing hash and encode/decode commands. """
@@ -14,12 +14,13 @@ from userbot import CMD_HELP
 from userbot.events import register
 
 
-@register(outgoing=True, pattern=r"^\.hash (.*)")
+@register(outgoing=True, pattern="^.hash (.*)")
 async def gethash(hash_q):
     """ For .hash command, find the md5, sha1, sha256, sha512 of the string. """
     hashtxt_ = hash_q.pattern_match.group(1)
-    with open("hashdis.txt", "w+") as hashtxt:
-        hashtxt.write(hashtxt_)
+    hashtxt = open("hashdis.txt", "w+")
+    hashtxt.write(hashtxt_)
+    hashtxt.close()
     md5 = runapp(["md5sum", "hashdis.txt"], stdout=PIPE)
     md5 = md5.stdout.decode()
     sha1 = runapp(["sha1sum", "hashdis.txt"], stdout=PIPE)
@@ -43,8 +44,9 @@ async def gethash(hash_q):
         + "`"
     )
     if len(ans) > 4096:
-        with open("hashes.txt", "w+") as hashfile:
-            hashfile.write(ans)
+        hashfile = open("hashes.txt", "w+")
+        hashfile.write(ans)
+        hashfile.close()
         await hash_q.client.send_file(
             hash_q.chat_id,
             "hashes.txt",
@@ -56,7 +58,7 @@ async def gethash(hash_q):
         await hash_q.reply(ans)
 
 
-@register(outgoing=True, pattern=r"^\.base64 (en|de) (.*)")
+@register(outgoing=True, pattern="^.base64 (en|de) (.*)")
 async def endecrypt(query):
     """ For .base64 command, find the base64 encoding of the given string. """
     if query.pattern_match.group(1) == "en":
@@ -73,11 +75,10 @@ async def endecrypt(query):
         await query.reply("Decoded: `" + lething[:-1] + "`")
 
 
+CMD_HELP.update({"base64": "Find the base64 encoding of the given string"})
+
 CMD_HELP.update(
     {
-        "hash": ">`.hash`"
-        "\nUsage: Find the md5, sha1, sha256, sha512 of the string when written into a txt file.",
-        "base64": ">`.base64 [en or de]`"
-        "\nUsage: Find the base64 encoding of the given string or decode it.",
+        "hash": "Find the md5, sha1, sha256, sha512 of the string when written into a txt file."
     }
 )

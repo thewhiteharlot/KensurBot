@@ -38,19 +38,19 @@ async def okgoogle(img):
     message = await img.get_reply_message()
 
     if not message or not message.media:
-        return await img.edit("**Reply to a photo or sticker.**")
+        return await img.edit("**Responda a uma foto ou sticker.**")
 
     photo = io.BytesIO()
     await bot.download_media(message, photo)
     if not photo:
-        return await img.edit("**Couldn't download the image.**")
+        return await img.edit("**Não foi possível baixar a imagem.**")
 
     await img.edit("**Processing...**")
 
     try:
         image = Image.open(photo)
     except OSError:
-        return await img.edit("**Unsupported sexuality, most likely.**")
+        return await img.edit("**Ocorreu um erro.**")
 
     name = "okgoogle.png"
     image.save(name, "PNG")
@@ -63,11 +63,10 @@ async def okgoogle(img):
     fetchUrl = response.headers["Location"]
 
     if response == 400:
-        return await img.edit("**Google told me to fuck off.**")
+        return await img.edit("**Falha no processamento.**")
 
     await img.edit(
-        "**Image successfully uploaded to Google. Maybe.**"
-        "\n**Parsing source now. Maybe.**"
+        "**Imagem enviada ao Google com sucesso.**" "\n**Analisando fonte agora.**"
     )
     os.remove(name)
     match = await ParseSauce(fetchUrl + "&preferences?hl=en&fg=1#languages")
@@ -75,7 +74,7 @@ async def okgoogle(img):
     imgspage = match["similar_images"]
 
     if not guess and not imgspage:
-        return await img.edit("**Couldn't find anything for your uglyass.**")
+        return await img.edit("**Não foram encontrados resultados.**")
 
     try:
         counter = int(img.pattern_match.group(1))
@@ -86,16 +85,16 @@ async def okgoogle(img):
 
     if counter == 0:
         return await img.edit(
-            f"**Best match:** `{guess}`\
-                              \n\n[Visually similar images]({fetchUrl})\
-                              \n\n[Results for {guess}]({imgspage})"
+            f"**Melhor resultado:** `{guess}`\
+                              \n\n[Imagens visualmente semelhantes]({fetchUrl})\
+                              \n\n[Resultados para {guess}]({imgspage})"
         )
 
     await img.edit(
-        f"**Best match:** `{guess}`\
-                   \n\n[Visually similar images]({fetchUrl})\
-                   \n\n[Results for {guess}]({imgspage})\
-                   \n\n**Fetching images...**"
+        f"**Melhor resultado:** `{guess}`\
+                   \n\n[Imagens visualmente semelhantes]({fetchUrl})\
+                   \n\n[Resultados para {guess}]({imgspage})\
+                   \n\n**Buscando imagens...**"
     )
 
     response = googleimagesdownload()
@@ -112,10 +111,10 @@ async def okgoogle(img):
         paths = response.download(arguments)
     except Exception as e:
         return await img.edit(
-            f"**Best match:** `{guess}`\
-                              \n\n[Visually similar images]({fetchUrl})\
-                              \n\n[Results for {guess}]({imgspage})\
-                              \n\n**Error:** `{e}`**.**"
+            f"**Melhor resultado:** `{guess}`\
+                              \n\n[Imagens visualmente semelhantes]({fetchUrl})\
+                              \n\n[Resultados para {guess}]({imgspage})\
+                              \n\n**Erro:** `{e}`**.**"
         )
 
     lst = paths[0][guess]
@@ -125,9 +124,9 @@ async def okgoogle(img):
         reply_to=img,
     )
     await img.edit(
-        f"**Best match:** `{guess}`\
-                   \n\n[Visually similar images]({fetchUrl})\
-                   \n\n[Results for {guess}]({imgspage})"
+        f"**Melhor resultado:** `{guess}`\
+                   \n\n[Imagens visualmente semelhantes]({fetchUrl})\
+                   \n\n[Resultados para {guess}]({imgspage})"
     )
     shutil.rmtree(os.path.dirname(os.path.abspath(lst[0])))
 
@@ -157,10 +156,10 @@ async def ParseSauce(googleurl):
 
 CMD_HELP.update(
     {
-        "reverse": ">`.reverse [counter] <optional>`"
-        "\nUsage: Reply to a pic/sticker to reverse-search it on Google Images."
-        "\nNumber of results can be specified, default is 3."
-        "\nIf counter is 0, only info and links will be provided."
-        "\nBot might fail to upload images if a high number of results are requested."
+        "reverse": ">`.reverse [número de resultados] <opcional>`"
+        "\nUso: Responda a uma foto/sticker para fazer uma busca reversa no Google."
+        "\nO número de resultados pode ser especificado, o padrão é 3."
+        "\nSe o contador for 0, apenas informações e links serão fornecidos."
+        "\nO bot pode falhar no upload de imagens se um grande número de resultados for solicitado."
     }
 )
